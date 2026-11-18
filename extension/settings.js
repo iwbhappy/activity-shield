@@ -1,7 +1,7 @@
 export const DEFAULT_ALLOWLIST = ["web.whatsapp.com"];
 export const SCRIPT_ID = "activity-shield";
 export const REGISTRATION_PREFIX = "activity-shield-v2-";
-export const SETTINGS_SCHEMA = 2;
+export const SETTINGS_SCHEMA = 3;
 export const MAX_BACKUP_SIZE = 1_000_000;
 export const FEATURES = [
   { id: "presence", label: "Видимость и фокус", detail: "Сайт получает visible / true при переключении вкладки или приложения.", default: true },
@@ -10,7 +10,8 @@ export const FEATURES = [
   { id: "fullscreen", label: "Синтетический полный экран", detail: "Запрос сайта успешен, но окно не разворачивается. Влияет на видео и игры.", default: true },
   { id: "lifecycle", label: "Сигналы жизненного цикла", detail: "Дополнительно: pagehide, freeze/resume и возврат из кэша. Может мешать восстановлению страниц.", default: false },
   { id: "clipboard", label: "Скрывать копирование и вырезание", detail: "Дополнительно: события copy/cut. Вставка сохраняется; возможны проблемы с редакторами.", default: false },
-  { id: "pointerBoundary", label: "Скрывать уход указателя", detail: "Дополнительно: события выхода без связанного элемента, в том числе на границе окна или фрейма.", default: false }
+  { id: "pointerBoundary", label: "Скрывать уход указателя", detail: "Дополнительно: события выхода без связанного элемента, в том числе на границе окна или фрейма.", default: false },
+  { id: "viewport", label: "Скрывать изменение размера окна", detail: "Фиксирует основные размеры и ориентацию, фильтрует resize. Может мешать адаптивным интерфейсам; CSS и вёрстка остаются косвенным каналом.", default: true }
 ];
 export const FEATURE_IDS = FEATURES.map(({ id }) => id);
 export const DEFAULT_FEATURES = Object.fromEntries(FEATURES.map(({ id, default: value }) => [id, value]));
@@ -61,6 +62,17 @@ export function defaultSettings(allowlist = DEFAULT_ALLOWLIST) {
 }
 export function normalizeSettings(value) {
   onlyKeys(value, ["schemaVersion", "enabled", "defaults", "allowlist", "sites"]);
+  if (value.schemaVersion === 2) {
+    const legacyIds = FEATURE_IDS.filter((id) => id !== "viewport");
+    const migrate = (flags) => {
+      onlyKeys(flags, legacyIds);
+      if (legacyIds.some((id) => typeof flags[id] !== "boolean")) throw new Error("Повреждён старый профиль защиты.");
+      return { ...flags, viewport: legacyIds.some((id) => flags[id]) };
+    };
+    if (!record(value.sites)) throw new Error("Неверный формат профилей.");
+    return normalizeSettings({ ...value, schemaVersion: SETTINGS_SCHEMA, defaults: migrate(value.defaults),
+      sites: Object.fromEntries(Object.entries(value.sites).map(([host, flags]) => [host, migrate(flags)])) });
+  }
   if (value.schemaVersion !== SETTINGS_SCHEMA || typeof value.enabled !== "boolean") throw new Error("Неподдерживаемая версия настроек.");
   if (!record(value.sites) || Object.keys(value.sites).length > 500) throw new Error("Допустимо до 500 профилей сайтов.");
   const entries = Object.entries(value.sites).map(([key, flags]) => [normalizeHost(key), normalizeFeatures(flags)]);

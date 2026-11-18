@@ -1,6 +1,6 @@
 {
   "name": "activity-shield",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "type": "module",
   "description": "Учебное расширение приватности для Chromium и Firefox",
@@ -12,7 +12,8 @@
     "android:run": "npm run build && node scripts/android-run.mjs",
     "android:lint": "web-ext lint --source-dir dist/firefox-android --self-hosted",
     "test:android": "npm run build && node --test tests/android.test.mjs",
-    "test": "npm run build && node --test --test-concurrency=1 tests/android-target.test.mjs tests/settings.test.mjs tests/browsers.test.mjs"
+    "test": "npm run build && node --test --test-concurrency=1 tests/android-target.test.mjs tests/settings.test.mjs tests/browsers.test.mjs tests/viewport.test.mjs",
+    "test:viewport": "npm run build && node --test tests/viewport.test.mjs"
   },
   "engines": {
     "node": ">=22"

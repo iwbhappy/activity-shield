@@ -5,6 +5,19 @@ import { DEFAULT_FEATURES, FEATURE_IDS, defaultSettings, normalizeSettings, effe
   registrationGroups, featureMask, exportSettings, parseSettingsImport } from "../extension/settings.js";
 import { diagnosticReport } from "../extension/diagnostics.js";
 
+test("Viewport migration preserves schema-2 backups, allowlist and disabled profiles", () => {
+  const legacy = defaultSettings([]);
+  legacy.schemaVersion = 2;
+  delete legacy.defaults.viewport;
+  legacy.sites["off.test"] = Object.fromEntries(Object.keys(legacy.defaults).map((id) => [id, false]));
+  const next = normalizeSettings(legacy);
+  assert.equal(next.schemaVersion, 3);
+  assert.equal(next.defaults.viewport, true);
+  assert.equal(next.sites["off.test"].viewport, false);
+  assert.deepEqual(next.allowlist, []);
+  assert.deepEqual(parseSettingsImport(JSON.stringify({ format: "activity-shield-settings", formatVersion: 1, settings: legacy })), next);
+});
+
 test("Allowlist normalizes URLs and IDNs without accepting browser match patterns", () => {
   assert.equal(normalizeHost(" HTTPS://Web.WhatsApp.com:443/path?q=1 "), "web.whatsapp.com");
   assert.equal(normalizeHost("пример.рф"), "xn--e1afmkfd.xn--p1ai");

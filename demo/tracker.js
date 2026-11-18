@@ -18,7 +18,8 @@
   for (const type of ["fullscreenchange", "fullscreenerror", "webkitfullscreenchange", "mozfullscreenchange", "visibilitychange", "focus", "blur", "focusin", "focusout", "contextmenu", "selectionchange", "selectstart", "select", "mousedown", "mouseup", "pointerdown", "pointerup", "auxclick", "click", "keydown", "keyup"]) {
     window.addEventListener(type, record, true);
   }
-  for (const type of ["pagehide", "freeze", "resume", "copy", "cut"]) window.addEventListener(type, record, true);
+  for (const type of ["pagehide", "freeze", "resume", "copy", "cut", "resize", "orientationchange"]) window.addEventListener(type, record, true);
+  window.visualViewport?.addEventListener("resize", record);
   // Avoid noise from initial page load and ordinary internal pointer moves.
   window.addEventListener("pageshow", (event) => { if (event.persisted) record(event); }, true);
   for (const type of ["mouseout", "mouseleave", "pointerout", "pointerleave"]) {
@@ -32,6 +33,11 @@
       hidden: document.hidden,
       visibilityState: document.visibilityState,
       hasFocus: document.hasFocus(),
+      windowSize: { width: innerWidth, height: innerHeight, outerWidth, outerHeight },
+      viewportSize: { width: visualViewport?.width, height: visualViewport?.height },
+      rootSize: { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight },
+      orientation: screen.orientation?.type,
+      portraitQuery: matchMedia("(orientation: portrait)").matches,
       fullscreenElement: document.fullscreenElement?.id || document.fullscreenElement?.nodeName || null,
       fullscreen: Boolean(document.fullscreenElement),
       selection: String(selection),

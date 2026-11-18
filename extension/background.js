@@ -12,7 +12,11 @@ function serialize(operation) {
 }
 async function readSettings() {
   const stored = await api.storage.local.get(["settings", "allowlist"]);
-  if (stored.settings !== undefined) return normalizeSettings(stored.settings);
+  if (stored.settings !== undefined) {
+    const settings = normalizeSettings(stored.settings);
+    if (stored.settings.schemaVersion !== settings.schemaVersion) await api.storage.local.set({ settings });
+    return settings;
+  }
   const settings = defaultSettings(stored.allowlist === undefined ? undefined : stored.allowlist);
   await api.storage.local.set({ settings, allowlist: settings.allowlist });
   return settings;

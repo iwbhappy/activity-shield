@@ -16,6 +16,7 @@ for (const target of ["chromium", "firefox", "firefox-android"]) {
   const zip = unzipSync(await read(`dist/activity-shield-${target}.zip`));
   const manifest = JSON.parse(strFromU8(zip["manifest.json"]));
   assert.equal(manifest.version, pkg.version);
+  assert.ok(strFromU8(zip["popup.html"]).includes(pkg.version), "Popup must show the packaged version");
   assert.equal(manifest.manifest_version, 3);
   assert.ok(!manifest.update_url && !manifest.browser_specific_settings?.gecko.update_url);
   if (target === "firefox") assert.equal(manifest.browser_specific_settings.gecko.id, "activity-shield@antiprotection.local");

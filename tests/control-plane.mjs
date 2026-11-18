@@ -91,7 +91,7 @@ export async function verifyControlPlane({ extensionRead, pageRead, navigate, st
     const migrated = (await call("settings:get")).settings;
     assert.deepEqual(migrated.allowlist, ["legacy.example"]);
     assert.deepEqual(migrated.defaults, DEFAULT_FEATURES);
-    assert.equal(migrated.schemaVersion, 2);
+    assert.equal(migrated.schemaVersion, 3);
     assert.equal(await extensionRead(async () => (await (globalThis.browser ?? globalThis.chrome).scripting.getRegisteredContentScripts())
       .some(({ id }) => id === "activity-shield")), false, "Upgrade removes the old monolithic registration");
   } finally {
