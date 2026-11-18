@@ -26,11 +26,11 @@ for (const browser of ["chromium", "firefox", "firefox-android"]) {
 }
 
 const submission = {};
-for (const directory of ["extension", "android", "scripts", "tests", "demo", "dist/chromium", "dist/firefox", "dist/firefox-android"]) {
+for (const directory of ["extension", "android", "scripts", "tests", "demo", ".github", "dist/chromium", "dist/firefox", "dist/firefox-android"]) {
   await collect(directory, submission);
 }
 for (const file of [
-  "README.md", "REPORT.md", "ANDROID.md", "PUBLISHING.md", "GITHUB.md", "package.json", "package-lock.json", ".gitignore",
+  "README.md", "REPORT.md", "ANDROID.md", "PUBLISHING.md", "GITHUB.md", "CHANGELOG.md", "package.json", "package-lock.json", ".gitignore",
   "dist/activity-shield-chromium.zip", "dist/activity-shield-firefox.zip",
   "dist/activity-shield-firefox-android.zip", "dist/activity-shield-firefox-android-unsigned.xpi"
 ]) submission[file] = await readFile(path.join(root, file));

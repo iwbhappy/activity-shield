@@ -1,30 +1,80 @@
 <!doctype html>
 <html lang="ru">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Activity Shield</title>
-<link rel="stylesheet" href="popup.css">
-<script type="module" src="popup.js"></script>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Activity Shield</title>
+  <link rel="stylesheet" href="popup.css">
+  <script type="module" src="popup.js"></script>
+</head>
+<body>
 <main>
-  <small>УЧЕБНЫЙ ПРОЕКТ · 1.0.4</small>
+  <small>УЧЕБНЫЙ ПРОЕКТ · 1.1.0</small>
   <h1>Activity Shield</h1>
   <p id="current-host">Определение сайта…</p>
-  <p id="site-state"></p>
-  <button id="toggle-site" type="button" disabled>Добавить сайт в белый список</button>
+  <p id="site-state" role="status">Проверка загрузки защиты…</p>
+  <p id="applied-summary" class="note"></p>
+  <div class="actions">
+    <button id="reload-tab" type="button" hidden>Перезагрузить вкладку</button>
+    <button id="refresh-status" type="button">Проверить статус</button>
+    <button id="grant-access" type="button" hidden>Разрешить доступ к сайту</button>
+  </div>
+  <button id="pause-protection" type="button" disabled>Пауза на всех сайтах</button>
+  <p class="note">Пауза и изменения настроек применяются после перезагрузки уже открытых страниц.</p>
   <p id="message" role="status" aria-live="polite"></p>
-  <button id="reload-tab" type="button" hidden>Перезагрузить вкладку</button>
-  <h2>Белый список</h2>
-  <p class="note">На этих доменах и их поддоменах защита отключена. WhatsApp Web добавлен по умолчанию.</p>
-  <form id="add-domain">
-    <label for="domain">Домен или адрес сайта</label>
-    <input id="domain" name="domain" placeholder="example.com" autocomplete="off" spellcheck="false" required>
-    <button type="submit">Добавить</button>
-  </form>
-  <ul id="allowlist"></ul>
-  <p class="note">Изменения действуют после перезагрузки страницы. Список хранится только в этом браузере.</p>
+
   <details>
-    <summary>Что делает защита</summary>
-    <p class="note">Скрывает прямые сведения о фокусе, видимости и выделении, фильтрует ПКМ и заменяет запрос полного экрана синтетическим состоянием. Может мешать редакторам и полноэкранному видео. Косвенные сигналы активности остаются.</p>
+    <summary>Настройки защиты</summary>
+    <label for="feature-scope">Применить настройки</label>
+    <select id="feature-scope">
+      <option value="site">Только к текущему домену</option>
+      <option value="default">По умолчанию для остальных сайтов</option>
+    </select>
+    <p id="profile-note" class="note"></p>
+    <div class="actions">
+      <button id="compatible-profile" type="button">Совместимый профиль</button>
+      <button id="strict-profile" type="button">Все фильтры</button>
+    </div>
+    <fieldset id="features"><legend>Что скрывать от сайта</legend></fieldset>
+    <div class="actions">
+      <button id="save-features" type="button">Сохранить защиту</button>
+      <button id="reset-features" type="button" hidden>Использовать общие настройки</button>
+    </div>
+    <p class="note">Исключение в белом списке отключает все фильтры. Дополнительные фильтры изначально выключены: они могут мешать сайтам.</p>
   </details>
+
+  <details open>
+    <summary>Белый список</summary>
+    <button id="toggle-site" type="button" disabled>Отключить защиту на этом домене</button>
+    <p class="note">Исключения действуют на домен и поддомены. WhatsApp Web добавлен по умолчанию. Индивидуальные профили выше действуют только на точное имя домена.</p>
+    <form id="add-domain">
+      <label for="domain">Домен или адрес сайта</label>
+      <input id="domain" name="domain" placeholder="example.com" autocomplete="off" spellcheck="false" required>
+      <button type="submit">Добавить</button>
+    </form>
+    <ul id="allowlist"></ul>
+  </details>
+
+  <details>
+    <summary>Перенос настроек</summary>
+    <button id="export-settings" type="button">Скачать настройки JSON</button>
+    <label for="import-file">Импорт из файла (до 1 МБ)</label>
+    <input id="import-file" type="file" accept="application/json,.json">
+    <p id="import-preview" class="note"></p>
+    <button id="apply-import" type="button" hidden>Заменить настройки из файла</button>
+    <button id="cancel-import" type="button" hidden>Отменить импорт</button>
+    <p class="note">Резервная копия содержит домены и переключатели этого браузера. Данные не отправляются на сервер.</p>
+  </details>
+
+  <details>
+    <summary>Диагностика</summary>
+    <button id="make-diagnostics" type="button">Сформировать отчёт</button>
+    <textarea id="diagnostics-text" readonly rows="9" aria-label="Диагностический отчёт" hidden></textarea>
+    <button id="download-diagnostics" type="button" hidden>Скачать отчёт JSON</button>
+    <p class="note">Отчёт не содержит адресов, доменов, текста страниц, переписки или содержимого буфера обмена. Сохраните его сами, если хотите передать разработчику.</p>
+  </details>
+
+  <p class="note">Статус относится к основной странице: загрузка скриптов и проверка основных API. Он не гарантирует отсутствие всех каналов слежки и не защищён от подделки самой страницей. Настройки встроенных фреймов применяются по их собственным URL.</p>
 </main>
+</body>
 </html>

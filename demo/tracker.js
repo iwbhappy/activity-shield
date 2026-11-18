@@ -18,6 +18,12 @@
   for (const type of ["fullscreenchange", "fullscreenerror", "webkitfullscreenchange", "mozfullscreenchange", "visibilitychange", "focus", "blur", "focusin", "focusout", "contextmenu", "selectionchange", "selectstart", "select", "mousedown", "mouseup", "pointerdown", "pointerup", "auxclick", "click", "keydown", "keyup"]) {
     window.addEventListener(type, record, true);
   }
+  for (const type of ["pagehide", "freeze", "resume", "copy", "cut"]) window.addEventListener(type, record, true);
+  // Avoid noise from initial page load and ordinary internal pointer moves.
+  window.addEventListener("pageshow", (event) => { if (event.persisted) record(event); }, true);
+  for (const type of ["mouseout", "mouseleave", "pointerout", "pointerleave"]) {
+    window.addEventListener(type, (event) => { if (event.relatedTarget === null) record(event); }, true);
+  }
 
   window.demo.snapshot = () => {
     const selection = window.getSelection();

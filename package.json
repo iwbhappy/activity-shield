@@ -1,10 +1,11 @@
 {
   "name": "activity-shield",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "Учебное расширение приватности для Chromium и Firefox",
   "scripts": {
+    "release:check": "node scripts/check-release.mjs",
     "build": "node scripts/build.mjs",
     "pack": "npm run build && node scripts/package.mjs",
     "demo": "node scripts/serve-demo.mjs",

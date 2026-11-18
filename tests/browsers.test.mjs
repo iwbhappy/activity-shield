@@ -1,12 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { chromium } from "playwright";
 import { Builder, By, Key } from "selenium-webdriver";
 import firefox from "selenium-webdriver/firefox.js";
 import { startDemo } from "../scripts/serve-demo.mjs";
+import { verifyControlPlane } from "./control-plane.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 
@@ -351,6 +352,40 @@ test("Chromium: installed extension and unprotected control", { timeout: 120_000
           await page.waitForFunction(() => !document.querySelector('[aria-label="Удалить 127.0.0.1"]'));
           await page.goto(url);
           await verify((fn, arg) => page.evaluate(fn, arg), true);
+          const control = await context.newPage();
+          await control.goto(popupURL);
+          await control.locator("#pause-protection:not([disabled])").waitFor();
+          try {
+            const tabId = await control.evaluate(async (address) => (await chrome.tabs.query({})).find((tab) => tab.url === address + "/").id, url);
+            await verifyControlPlane({
+              extensionRead: (fn, arg) => control.evaluate(fn, arg), pageRead: (fn, arg) => page.evaluate(fn, arg),
+              navigate: (address) => page.goto(address), tabId, url,
+              startFullscreen: async () => {
+                await page.bringToFront();
+                await page.locator("#fullscreen-start").click();
+                await page.waitForFunction(() => window.demo.fullscreenRequest === "resolved");
+              },
+              exportUI: async () => {
+                await control.evaluate(() => { document.getElementById("export-settings").closest("details").open = true; });
+                const pending = control.waitForEvent("download");
+                await control.locator("#export-settings").click();
+                const download = await pending;
+                const destination = path.join(root, "test-results/chromium-settings.json");
+                await download.saveAs(destination);
+                return readFile(destination, "utf8");
+              },
+              importUI: async (text, valid) => {
+                await control.evaluate(() => { document.getElementById("import-file").closest("details").open = true; });
+                await control.locator("#import-file").setInputFiles({ name: "settings.json", mimeType: "application/json", buffer: Buffer.from(text) });
+                if (valid) {
+                  await control.locator("#apply-import").click();
+                  await control.locator("#apply-import").waitFor({ state: "hidden" });
+                } else {
+                  await control.waitForFunction(() => document.getElementById("import-preview").textContent.length > 0 && document.getElementById("apply-import").hidden);
+                }
+              }
+            });
+          } finally { await control.close(); }
         }
         assert.deepEqual(errors, [], "No page script errors under strict CSP");
         console.log(`Chromium ${context.browser().version()}: ${protectedMode ? "protected" : "baseline"} passed`);
@@ -365,6 +400,12 @@ test("Firefox: installed extension, baseline and real background tab", { timeout
   t.after(() => new Promise((resolve) => { server.closeAllConnections(); server.close(resolve); }));
   const url = `http://127.0.0.1:${server.address().port}`;
   const options = new firefox.Options().addArguments("-headless", "--allow-system-access");
+  await mkdir(path.join(root, "test-results"), { recursive: true });
+  const downloads = await mkdtemp(path.join(root, "test-results/firefox-downloads-"));
+  options.setPreference("browser.download.folderList", 2);
+  options.setPreference("browser.download.dir", downloads);
+  options.setPreference("browser.download.useDownloadDir", true);
+  options.setPreference("browser.helperApps.neverAsk.saveToDisk", "application/json");
   if (process.env.FIREFOX_BINARY) options.setBinary(process.env.FIREFOX_BINARY);
   const driver = await new Builder().forBrowser("firefox").setFirefoxOptions(options).build();
   try {
@@ -376,7 +417,8 @@ test("Firefox: installed extension, baseline and real background tab", { timeout
         const id = await driver.installAddon(path.join(root, "dist/firefox"), true);
         popupURL = await firefoxPopupURL(driver, id);
         await driver.get(popupURL);
-        await driver.wait(async () => (await driver.findElements(By.css('#allowlist li'))).length > 0, 10_000);
+        try { await driver.wait(async () => (await driver.findElements(By.css('#allowlist li'))).length > 0, 10_000); }
+        catch (error) { throw new Error(`Firefox settings failed to initialize: ${await driver.findElement(By.tagName("body")).getText()}`, { cause: error }); }
       }
       await driver.get(url);
       await verify(read, protectedMode);
@@ -471,6 +513,54 @@ test("Firefox: installed extension, baseline and real background tab", { timeout
         await driver.wait(async () => (await driver.findElements(By.css('[aria-label="Удалить 127.0.0.1"]'))).length === 0, 10_000);
         await driver.get(url);
         await verify(read, true);
+        await driver.switchTo().newWindow("tab");
+        const controlHandle = await driver.getWindowHandle();
+        await driver.get(popupURL);
+        await driver.wait(async () => (await driver.findElement(By.id("pause-protection"))).isEnabled(), 10_000);
+        const extensionRead = async (fn, arg) => { await driver.switchTo().window(controlHandle); return read(fn, arg); };
+        const pageRead = async (fn, arg) => { await driver.switchTo().window(originalHandle); return read(fn, arg); };
+        try {
+          const tabId = await extensionRead(async (address) => (await browser.tabs.query({})).find((tab) => tab.url === address + "/").id, url);
+          await verifyControlPlane({
+            extensionRead, pageRead, tabId, url,
+            navigate: async (address) => { await driver.switchTo().window(originalHandle); await driver.get(address); },
+            startFullscreen: async () => {
+              await driver.switchTo().window(originalHandle);
+              await driver.findElement(By.id("fullscreen-start")).click();
+              await driver.wait(() => read(() => window.demo.fullscreenRequest === "resolved"), 8000);
+            },
+            exportUI: async () => {
+              await extensionRead(() => { document.getElementById("export-settings").closest("details").open = true; });
+              await driver.findElement(By.id("export-settings")).click();
+              let contents;
+              await driver.wait(async () => {
+                try { contents = await readFile(path.join(downloads, "activity-shield-settings.json"), "utf8"); return Boolean(contents); }
+                catch { return false; }
+              }, 10_000);
+              return contents;
+            },
+            importUI: async (text, valid) => {
+              const destination = path.join(downloads, valid ? "import-valid.json" : "import-invalid.json");
+              await writeFile(destination, text);
+              await extensionRead(() => { document.getElementById("import-file").closest("details").open = true; });
+              await driver.findElement(By.id("import-file")).sendKeys(destination);
+              try {
+              if (valid) {
+                await driver.wait(async () => (await driver.findElement(By.id("apply-import"))).isDisplayed(), 10_000);
+                await driver.findElement(By.id("apply-import")).click();
+                await driver.wait(async () => !(await (await driver.findElement(By.id("apply-import"))).isDisplayed()), 10_000);
+              } else {
+                await driver.wait(() => read(() => document.getElementById("import-preview").textContent.length > 0 && document.getElementById("apply-import").hidden), 10_000);
+              }
+              } catch (error) {
+                throw new Error(`Firefox import (${valid ? "valid" : "invalid"}): ${await read(() => document.getElementById("import-preview").textContent + " / " + document.getElementById("message").textContent)}`, { cause: error });
+              }
+            }
+          });
+        } finally {
+          await driver.switchTo().window(controlHandle); await driver.close();
+          await driver.switchTo().window(originalHandle);
+        }
       }
       await driver.switchTo().window(otherHandle);
       await driver.close();
@@ -504,6 +594,16 @@ test("Chromium: allowlist and early registration survive a full browser restart"
     await settings.getByRole("button", { name: "Удалить 127.0.0.1", exact: true }).waitFor();
     await context.close();
     context = await launch();
+    // Playwright returns before the unpacked extension has finished loading.
+    // Observe startup readiness without opening its popup or changing rules.
+    const readyWorker = context.serviceWorkers()[0] || await context.waitForEvent("serviceworker");
+    await readyWorker.evaluate(async () => {
+      for (let attempt = 0; attempt < 100; attempt++) {
+        if ((await chrome.scripting.getRegisteredContentScripts()).length >= 2) return;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      throw new Error("Persisted registrations were not restored");
+    });
     const page = await context.newPage();
     // Do not open the popup first: the persisted registration must be enough.
     await page.goto(url.replace("127.0.0.1", "localhost"));
@@ -526,7 +626,25 @@ test("Chromium: allowlist and early registration survive a full browser restart"
     await popup.locator("#toggle-site").click();
     await popup.getByRole("button", { name: "Удалить 127.0.0.1", exact: true }).waitFor();
     await popup.screenshot({ path: path.join(root, "test-results/allowlist-popup.png"), fullPage: true });
-    await page.goto(popupURL);
-    await page.getByRole("button", { name: "Удалить 127.0.0.1", exact: true }).waitFor();
+    await popup.locator("#toggle-site").click();
+    await popup.waitForFunction(() => !document.querySelector('[aria-label="Удалить 127.0.0.1"]'));
+    await popup.evaluate(() => { document.getElementById("features").closest("details").open = true; });
+    await popup.locator("#compatible-profile").click();
+    await popup.locator("#save-features").click();
+    await popup.waitForFunction(() => !document.getElementById("pause-protection").disabled && document.getElementById("site-state").textContent.includes("перезагрузка"));
+    await page.reload();
+    assert.ok((await page.evaluate(() => { getSelection().selectAllChildren(document.getElementById("sample-text")); return String(getSelection()); })).length > 10, "Compatible-profile UI restores native selection");
+    assert.equal(await page.evaluate(() => Document.prototype.hasFocus.name), "activityShieldHasFocus");
+    await popup.locator("#pause-protection").click();
+    await popup.waitForFunction(() => document.getElementById("pause-protection").textContent === "Возобновить защиту" && !document.getElementById("pause-protection").disabled);
+    await page.reload();
+    assert.notEqual(await page.evaluate(() => Document.prototype.hasFocus.name), "activityShieldHasFocus", "Pause button really stops protection");
+    await popup.locator("#pause-protection").click();
+    await popup.waitForFunction(() => document.getElementById("pause-protection").textContent === "Пауза на всех сайтах" && !document.getElementById("pause-protection").disabled);
+    await page.reload();
+    assert.equal(await page.evaluate(() => Document.prototype.hasFocus.name), "activityShieldHasFocus", "Resume preserves compatible profile");
+    await popup.locator("#refresh-status").click();
+    await popup.waitForFunction(() => document.getElementById("site-state").textContent === "Скрипты защиты загружены.");
+    await popup.screenshot({ path: path.join(root, "test-results/profiles-popup.png"), fullPage: true });
   } finally { await context.close(); }
 });
