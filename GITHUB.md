@@ -45,6 +45,8 @@ npm run pack
 
 Workflow `.github/workflows/ci.yml` запускает `npm ci`, браузерные тесты в Chromium/Firefox, Android lint, упаковку и проверку версии/содержимого архивов. При push в main и pull request доступны артефакты сборки; публикации магазина это не выполняет. Тестов Android-эмулятора в GitHub CI нет: мобильный прогон запускается отдельно.
 
+18 ноября 2026 года первый запуск [44300308181](https://github.com/iwbhappy/activity-shield/actions/runs/44300308181) остановлен GitHub до выполнения шагов: «The job was not started because your account is locked due to a billing issue». Нужно устранить ограничение аккаунта на стороне GitHub и повторить workflow. Локальные проверки выполняются независимо; первоначальный релиз 1.1.0 можно выпустить из локально проверенных архивов. Синтаксис workflow дополнительно проверен actionlint 1.7.12.
+
 Для следующего релиза:
 
 1. Поднимите версию в `package.json`, обоих местах `package-lock.json`, `extension/manifest.json` и подписи меню. Добавьте раздел в `CHANGELOG.md`.

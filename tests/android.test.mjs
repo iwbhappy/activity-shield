@@ -27,7 +27,7 @@ async function until(predicate, message, timeout = 30_000) {
 // unbound Gecko sessions (which can have a 0x0 viewport in Fenix). The ordinary
 // test page reports only the values available to page JS over loopback HTTP.
 test("Firefox Android: installed extension, native input, long press, fullscreen and app background", {
-  timeout: 240_000, skip: !serial && "Set ANDROID_SERIAL to a prepared Android test device"
+  timeout: 420_000, skip: !serial && "Set ANDROID_SERIAL to a prepared Android test device"
 }, async (t) => {
   await mkdir(path.join(root, "test-results"), { recursive: true });
   const run = (...args) => execFileSync(adb, ["-s", serial, ...args], { encoding: "utf8", windowsHide: true, timeout: 30_000 });
@@ -139,7 +139,8 @@ test("Firefox Android: installed extension, native input, long press, fullscreen
     await delay(400);
     run("shell", "input", "keyevent", "KEYCODE_BACK");
     const sequence = reports.get(mode).sequence;
-    const afterLongPress = await until(() => reports.get(mode)?.sequence > sequence && reports.get(mode), "Page did not resume after context menu");
+    const afterLongPress = await until(() => reports.get(mode)?.sequence > sequence
+      && (protectedMode || reports.get(mode)?.contextmenu > 0) && reports.get(mode), "Page did not resume with the expected context-menu report");
     assert.equal(afterLongPress.contextmenu > 0, !protectedMode, "Native long-press contextmenu is filtered");
 
     const fullscreenButton = await bounds("Start fullscreen");

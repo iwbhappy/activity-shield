@@ -85,11 +85,15 @@ export async function verifyControlPlane({ extensionRead, pageRead, navigate, st
       const api = globalThis.browser ?? globalThis.chrome;
       await api.storage.local.set({ allowlist: ["legacy.example"] });
       await api.storage.local.remove("settings");
+      await api.scripting.registerContentScripts([{ id: "activity-shield", matches: ["http://*/*", "https://*/*"],
+        js: ["protections/presence.js"], runAt: "document_start", world: "MAIN", persistAcrossSessions: true }]);
     });
     const migrated = (await call("settings:get")).settings;
     assert.deepEqual(migrated.allowlist, ["legacy.example"]);
     assert.deepEqual(migrated.defaults, DEFAULT_FEATURES);
     assert.equal(migrated.schemaVersion, 2);
+    assert.equal(await extensionRead(async () => (await (globalThis.browser ?? globalThis.chrome).scripting.getRegisteredContentScripts())
+      .some(({ id }) => id === "activity-shield")), false, "Upgrade removes the old monolithic registration");
   } finally {
     await call("settings:import", { text: original.text });
     await navigate(url);
