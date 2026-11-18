@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Activity Shield</title>
+<link rel="stylesheet" href="popup.css">
+<script type="module" src="popup.js"></script>
+<main>
+  <small>УЧЕБНЫЙ ПРОЕКТ · 1.0.4</small>
+  <h1>Activity Shield</h1>
+  <p id="current-host">Определение сайта…</p>
+  <p id="site-state"></p>
+  <button id="toggle-site" type="button" disabled>Добавить сайт в белый список</button>
+  <p id="message" role="status" aria-live="polite"></p>
+  <button id="reload-tab" type="button" hidden>Перезагрузить вкладку</button>
+  <h2>Белый список</h2>
+  <p class="note">На этих доменах и их поддоменах защита отключена. WhatsApp Web добавлен по умолчанию.</p>
+  <form id="add-domain">
+    <label for="domain">Домен или адрес сайта</label>
+    <input id="domain" name="domain" placeholder="example.com" autocomplete="off" spellcheck="false" required>
+    <button type="submit">Добавить</button>
+  </form>
+  <ul id="allowlist"></ul>
+  <p class="note">Изменения действуют после перезагрузки страницы. Список хранится только в этом браузере.</p>
+  <details>
+    <summary>Что делает защита</summary>
+    <p class="note">Скрывает прямые сведения о фокусе, видимости и выделении, фильтрует ПКМ и заменяет запрос полного экрана синтетическим состоянием. Может мешать редакторам и полноэкранному видео. Косвенные сигналы активности остаются.</p>
+  </details>
+</main>
+</html>

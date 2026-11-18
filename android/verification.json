@@ -1,0 +1,256 @@
+{
+  "extensionVersion": "1.0.1",
+  "android": "16",
+  "checks": [
+    {
+      "mode": "baseline",
+      "initial": {
+        "mode": "baseline",
+        "sequence": 1,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "This paragraph tests whether the page can read selected text.",
+          "count": 1,
+          "start": 2,
+          "end": 7
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "clicks": 0,
+        "contextmenu": 0,
+        "input": "testing",
+        "visibilityHistory": [],
+        "focusHistory": [],
+        "activeElement": "",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      },
+      "beforeHome": {
+        "mode": "baseline",
+        "sequence": 64,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "This paragraph tests whether the page can read selected text.",
+          "count": 1,
+          "start": 2,
+          "end": 7
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "clicks": 2,
+        "contextmenu": 1,
+        "input": "testingz",
+        "visibilityHistory": [],
+        "focusHistory": [
+          "focus:document",
+          "focus:window",
+          "focus:button",
+          "focusin:button",
+          "blur:button",
+          "focusout:button",
+          "focus:input",
+          "focusin:input",
+          "blur:input",
+          "focusout:input",
+          "focus:button",
+          "focusin:button"
+        ],
+        "activeElement": "button",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      },
+      "resumed": {
+        "mode": "baseline",
+        "sequence": 71,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "This paragraph tests whether the page can read selected text.",
+          "count": 1,
+          "start": 2,
+          "end": 7
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": true,
+          "visibilityState": "hidden",
+          "hasFocus": true
+        },
+        "clicks": 2,
+        "contextmenu": 1,
+        "input": "testingz",
+        "visibilityHistory": [
+          true
+        ],
+        "focusHistory": [
+          "focus:document",
+          "focus:window",
+          "focus:button",
+          "focusin:button",
+          "blur:button",
+          "focusout:button",
+          "focus:input",
+          "focusin:input",
+          "blur:input",
+          "focusout:input",
+          "focus:button",
+          "focusin:button",
+          "blur:button",
+          "focusout:button",
+          "blur:document",
+          "blur:window",
+          "focus:document",
+          "focus:window",
+          "focus:button",
+          "focusin:button"
+        ],
+        "activeElement": "button",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      }
+    },
+    {
+      "mode": "protected",
+      "initial": {
+        "mode": "protected",
+        "sequence": 1,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "",
+          "count": 0,
+          "start": 0,
+          "end": 0
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "clicks": 0,
+        "contextmenu": 0,
+        "input": "testing",
+        "visibilityHistory": [],
+        "focusHistory": [],
+        "activeElement": "",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      },
+      "beforeHome": {
+        "mode": "protected",
+        "sequence": 81,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "",
+          "count": 0,
+          "start": 0,
+          "end": 0
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "clicks": 2,
+        "contextmenu": 0,
+        "input": "testingz",
+        "visibilityHistory": [],
+        "focusHistory": [
+          "focus:button",
+          "focusin:button",
+          "blur:button",
+          "focusout:button",
+          "focus:input",
+          "focusin:input",
+          "blur:input",
+          "focusout:input",
+          "focus:button",
+          "focusin:button"
+        ],
+        "activeElement": "button",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      },
+      "resumed": {
+        "mode": "protected",
+        "sequence": 87,
+        "initial": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "selection": {
+          "text": "",
+          "count": 0,
+          "start": 0,
+          "end": 0
+        },
+        "viewport": {
+          "width": 396,
+          "height": 719
+        },
+        "current": {
+          "hidden": false,
+          "visibilityState": "visible",
+          "hasFocus": true
+        },
+        "clicks": 2,
+        "contextmenu": 0,
+        "input": "testingz",
+        "visibilityHistory": [],
+        "focusHistory": [
+          "focus:button",
+          "focusin:button",
+          "blur:button",
+          "focusout:button",
+          "focus:input",
+          "focusin:input",
+          "blur:input",
+          "focusout:input",
+          "focus:button",
+          "focusin:button"
+        ],
+        "activeElement": "button",
+        "userAgent": "Mozilla/5.0 (Android 16; Mobile; rv:159.0) Gecko/159.0 Firefox/159.0"
+      }
+    }
+  ]
+}

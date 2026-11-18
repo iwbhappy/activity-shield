@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Activity Shield — учебный проект",
+  "version": "1.0.4",
+  "description": "Скрывает прямые сигналы активности и выделения, поддерживает белый список и синтетический полноэкранный режим.",
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "permissions": ["storage", "scripting"],
+  "action": {
+    "default_title": "Activity Shield",
+    "default_popup": "popup.html"
+  }
+}

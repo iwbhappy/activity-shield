@@ -1,0 +1,14 @@
+:root { color-scheme: dark; font: 16px/1.6 system-ui, sans-serif; background: #101725; color: #e6edf7; }
+body { margin: 0; }
+main { max-width: 960px; margin: 0 auto; padding: 45px 24px; }
+small { color: #7dd3c5; letter-spacing: .1em; }
+h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.2; margin: 15px 0; }
+h2 { margin-top: 0; font-size: 21px; }
+section { background: #182438; border: 1px solid #30425e; border-radius: 14px; padding: 24px; margin: 22px 0; }
+pre { background: #101725; padding: 18px; border-radius: 8px; overflow: auto; font-size: 14px; }
+#events { min-height: 100px; max-height: 330px; }
+label { display: block; margin: 16px 0; }
+input, textarea { box-sizing: border-box; display: block; width: 100%; margin-top: 8px; padding: 12px; background: #101725; color: inherit; border: 1px solid #536e94; border-radius: 6px; font: inherit; }
+button { padding: 10px 16px; border: 0; border-radius: 7px; background: #7dd3c5; color: #102329; cursor: pointer; font: inherit; }
+.notice { color: #b6c4d9; }
+::selection { background: #7dd3c5; color: #102329; }
