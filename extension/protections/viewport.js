@@ -35,57 +35,8 @@
     silence(visualViewport, "resize");
   }
 
-  // Root viewport readers and root/body rectangles. Other element layout is
-  // deliberately native: masking all layout would break editing and scrolling.
-  const rects = new WeakMap();
-  const nativeRect = Element.prototype.getBoundingClientRect;
-  const NativeRect = DOMRect;
-  const isRoot = (element) => element === document.documentElement || element === document.body;
-  function dimensions(element) {
-    if (!rects.has(element)) {
-      const rect = apply(nativeRect, element, []);
-      rects.set(element, { width: rect.width, height: rect.height });
-    }
-    return rects.get(element);
-  }
-  function captureRoots() {
-    for (const element of [document.documentElement, document.body]) if (element) dimensions(element);
-  }
-  if (document.readyState !== "loading") captureRoots();
-  apply(nativeAdd, document, ["DOMContentLoaded", captureRoots, { capture: true, once: true }]);
-  define(Element.prototype, "getBoundingClientRect", { ...descriptor(Element.prototype, "getBoundingClientRect"),
-    value: function getBoundingClientRect() {
-      const actual = apply(nativeRect, this, []);
-      if (!isRoot(this)) return actual;
-      const size = dimensions(this);
-      return new NativeRect(actual.x, actual.y, size.width, size.height);
-    } });
-  for (const [key, value] of [["clientWidth", initial.width], ["clientHeight", initial.height]]) {
-    const original = descriptor(Element.prototype, key);
-    if (original?.configurable) define(Element.prototype, key, { ...original, get: function () {
-      if (this === document.documentElement || (document.compatMode === "BackCompat" && this === document.body)) return value;
-      return apply(original.get, this, []);
-    } });
-  }
-  const NativeObserver = window.ResizeObserver;
-  if (NativeObserver) {
-    window.ResizeObserver = class ResizeObserver extends NativeObserver {
-      constructor(callback) {
-        const seenRoots = new WeakSet();
-        if (typeof callback !== "function") { super(callback); return; }
-        super((entries, observer) => {
-          const filtered = entries.filter(({ target }) => {
-            if (!isRoot(target)) return true;
-            if (seenRoots.has(target)) return false;
-            seenRoots.add(target);
-            return true;
-          });
-          if (filtered.length) apply(callback, undefined, [filtered, observer]);
-        });
-      }
-    };
-  }
-
+  // Leave DOM measurements and ResizeObserver native so layout can respond
+  // to content added after load as well as to changes in the viewport.
   // Replace size-related media conditions with constant true/false conditions.
   // Native MediaQueryList objects retain listeners and non-size media features.
   // Unsupported size expressions fail closed to a constant false result.

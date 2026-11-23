@@ -17,25 +17,31 @@ async function prepare(read) {
     const queries = ["(max-width: 800px)", "(orientation: portrait)", "(min-aspect-ratio: 1/1)",
       "(600px <= width <= 900px)", "(width >= 1000px)", "(min-width: 60em)", "(min-width: 60rem)",
       "(width > calc(700px + 1px))", "(prefers-color-scheme: dark)"];
-    const probe = window.viewportProbe = { events: 0, mediaEvents: 0, rootEvents: 0, childEvents: 0,
+    const probe = window.viewportProbe = { events: 0, mediaEvents: 0, rootEvents: 0, bodyEvents: 0, childEvents: 0,
       lists: queries.map((query) => matchMedia(query)) };
     addEventListener("resize", () => { probe.events++; });
     for (const list of probe.lists) list.addEventListener("change", () => { probe.mediaEvents++; });
     probe.observer = new ResizeObserver((entries) => {
-      for (const entry of entries) if (entry.target === document.documentElement) probe.rootEvents++; else probe.childEvents++;
+      for (const { target } of entries) {
+        if (target === document.documentElement) probe.rootEvents++;
+        else if (target === document.body) probe.bodyEvents++;
+        else probe.childEvents++;
+      }
     });
     probe.observer.observe(document.documentElement);
+    probe.observer.observe(document.body);
     probe.observer.observe(sample);
     window.viewportSnapshot = () => ({
       sizes: [innerWidth, innerHeight, outerWidth, outerHeight, devicePixelRatio,
         screen.width, screen.height, screen.availWidth, screen.availHeight,
-        screen.orientation?.type, screen.orientation?.angle, visualViewport?.width, visualViewport?.height,
-        document.documentElement.clientWidth, document.documentElement.clientHeight,
-        document.documentElement.getBoundingClientRect().width, document.body.getBoundingClientRect().width],
+        screen.orientation?.type, screen.orientation?.angle, visualViewport?.width, visualViewport?.height],
+      rootWidth: document.documentElement.clientWidth,
+      rootRectWidth: document.documentElement.getBoundingClientRect().width,
+      bodyHeight: document.body.getBoundingClientRect().height,
       media: probe.lists.map((list) => list.matches),
       freshMedia: probe.lists.map((list) => matchMedia(list.media).matches),
       queries: probe.lists.map((list) => list.media),
-      events: probe.events, mediaEvents: probe.mediaEvents, rootEvents: probe.rootEvents,
+      events: probe.events, mediaEvents: probe.mediaEvents, rootEvents: probe.rootEvents, bodyEvents: probe.bodyEvents,
       childEvents: probe.childEvents, cssWidth: sample.getBoundingClientRect().width
     });
   });
@@ -43,19 +49,31 @@ async function prepare(read) {
   return read(() => viewportSnapshot());
 }
 async function verify(read, resize, protectedMode) {
-  const before = await prepare(read);
+  const initial = await prepare(read);
+  await read(() => {
+    const content = document.createElement("section");
+    content.style.minHeight = "500px";
+    content.textContent = "Content loaded after rendering";
+    document.body.append(content);
+  });
+  await read(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const before = await read(() => viewportSnapshot());
+  assert.ok(before.bodyHeight > initial.bodyHeight, "Late content must increase the reported body height");
+  assert.ok(before.bodyEvents > initial.bodyEvents, "Layouts observing the body must see late content");
   await resize(); // Actual browser viewport/window resize, no synthetic resize event.
   await read(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const after = await read(() => viewportSnapshot());
   assert.notEqual(after.cssWidth, before.cssWidth, "The browser really resized; CSS layout is an explicitly remaining channel");
+  assert.notEqual(after.rootWidth, before.rootWidth, "Root client width must reflect the actual layout");
+  assert.notEqual(after.rootRectWidth, before.rootRectWidth, "Root rectangle must reflect the actual layout");
+  assert.ok(after.rootEvents > before.rootEvents, "Root observers must receive layout changes");
   assert.deepEqual(after.queries, before.queries, "MediaQueryList.media retains the caller's query");
   if (protectedMode) {
-    assert.deepEqual(after.sizes, before.sizes, "Main dimensions, orientation and root readers stay fixed");
+    assert.deepEqual(after.sizes, before.sizes, "Main window dimensions and orientation stay fixed");
     assert.deepEqual(after.media, before.media);
     assert.deepEqual(after.freshMedia, before.freshMedia, "Creating a fresh query cannot poll the resized viewport");
     assert.equal(after.events, 0);
     assert.equal(after.mediaEvents, 0);
-    assert.equal(after.rootEvents, before.rootEvents, "Existing root ResizeObserver receives no size transition");
   } else {
     assert.notDeepEqual(after.sizes, before.sizes);
     assert.notDeepEqual(after.media, before.media);
